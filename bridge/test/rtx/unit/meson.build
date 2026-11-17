@@ -67,7 +67,7 @@ endif
 
 # Remix API Bridge App Tests
 # Each x86 app runs against the client and server from a regular bridge build in _output.
-bridge_app_tests = [ 'remix_api_init_order', 'remix_api_device_registration', 'sent_state_device', 'query_event_device', 'shared_heap_upload_device' ]
+bridge_app_tests = [ 'remix_api_init_order', 'remix_api_device_registration', 'sent_state_device', 'query_event_device', 'shared_heap_upload_device', 'vertex_format_device' ]
 if (cpu_family == 'x86')
 foreach name : bridge_app_tests
   tests += executable(
