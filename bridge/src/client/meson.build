@@ -28,6 +28,7 @@ d3d9_version = vcs_tag(
 d3d9_res = wrc_generator.process(d3d9_version)
 
 d3d9_src = files([
+  'd3d9_async_readback.cpp',
   'd3d9_bootstrap.cpp',
   'd3d9_cubetexture.cpp',
   'd3d9_device_base.cpp',

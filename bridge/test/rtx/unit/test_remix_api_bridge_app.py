@@ -32,6 +32,8 @@ parser.add_argument("--bridgeDir", required=True,
                     help="Folder with d3d9.dll and .trex\\NvRemixBridge.exe from a bridge build, usually bridge\\_output.")
 parser.add_argument("--artifactDir", required=True)
 parser.add_argument("--timeout", type=int, default=60, help="Seconds before a hung run is killed.")
+parser.add_argument("--serverD3d9", default=None,
+                    help="A stock DXVK x64 d3d9.dll for the server (server.useVanillaDxvk). The default is the system d3d9.dll.")
 args = parser.parse_args()
 
 
@@ -43,9 +45,13 @@ def deploy(run_dir, disable_timeouts, test_exe, client_dll, server_exe):
     shutil.copy2(test_exe, run_dir)
     shutil.copy2(client_dll, run_dir)
     shutil.copy2(server_exe, trex_dir)
+    if args.serverD3d9:
+        shutil.copy2(args.serverD3d9, os.path.join(trex_dir, "d3d9vk_x64.dll"))
     with open(os.path.join(trex_dir, "bridge.conf"), "w") as conf:
         conf.write("exposeRemixApi = True\n")
         conf.write("disableTimeouts = {}\n".format(disable_timeouts))
+        if args.serverD3d9:
+            conf.write("server.useVanillaDxvk = True\n")
 
 
 def stop_leftover_servers(run_dir):

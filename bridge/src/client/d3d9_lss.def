@@ -20,3 +20,7 @@ EXPORTS
 
   remixapi_InitializeLibrary @ 39
   remixapi_RegisterCallbacks @ 40
+
+  RemixBridge_ReadRenderTargetAsync
+  RemixBridge_PollReadback
+  RemixBridge_CancelReadback

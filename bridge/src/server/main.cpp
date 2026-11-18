@@ -49,6 +49,7 @@
 #include "config/config.h"
 #include "config/global_options.h"
 #include "server_options.h"
+#include "async_readback.h"
 #include "../client/client_options.h"
 
 #include "../tracy/tracy.hpp"
@@ -699,6 +700,7 @@ void ProcessDeviceCommandQueue() {
       case IDirect3DDevice9Ex_Destroy:
       {
         GET_RES(pD3DDevice, gpD3DDevices);
+        async_readback::dropAll();
         safeDestroy(pD3DDevice, pD3DDeviceHandle);
         gpD3DDevices.erase(pD3DDeviceHandle);
         ServerMessage { Commands::Bridge_Ack, currentUID };
@@ -842,6 +844,7 @@ void ProcessDeviceCommandQueue() {
       case IDirect3DDevice9Ex_Reset:
       {
         GET_RES(pD3DDevice, gpD3DDevices);
+        async_readback::dropAll();
         uint32_t* rawPresentationParameters = nullptr;
         DeviceBridge::get_data((void**) &rawPresentationParameters);
         D3DPRESENT_PARAMETERS PresentationParameters = getPresParamFromRaw(rawPresentationParameters);
@@ -863,6 +866,7 @@ void ProcessDeviceCommandQueue() {
       case IDirect3DDevice9Ex_ResetEx:
       {
         GET_RES(pD3DDevice, gpD3DDevices);
+        async_readback::dropAll();
         uint32_t* rawPresentationParameters = nullptr;
         DeviceBridge::get_data((void**) &rawPresentationParameters);
 
@@ -901,6 +905,7 @@ void ProcessDeviceCommandQueue() {
         HWND hwnd = TRUNCATE_HANDLE(HWND, hDestWindowOverride);
 
         const auto hresult = pD3DDevice->Present(pSourceRect, pDestRect, hwnd, pDirtyRegion);
+        async_readback::poll();
         if (!SUCCEEDED(hresult)) {
           std::stringstream ss;
           ss << "Present() failed! Check all logs for reported errors.";
@@ -1129,6 +1134,13 @@ void ProcessDeviceCommandQueue() {
         GET_RES(pD3DDevice, gpD3DDevices);
         PULL_HND(pRenderTargetHandle);
         PULL_HND(pDestSurfaceHandle);
+        if (Commands::IsAsyncResult(rpcHeader.flags)) {
+          PULL_U(slotIndex);
+          PULL_U(requestSeq);
+          async_readback::request(pD3DDevice, (IDirect3DSurface9*) gpD3DResources[pRenderTargetHandle],
+                                  (IDirect3DSurface9*) gpD3DResources[pDestSurfaceHandle], slotIndex, requestSeq);
+          break;
+        }
         const auto& pRenderTarget = (IDirect3DSurface9*) gpD3DResources[pRenderTargetHandle];
         const auto& pDestSurface = (IDirect3DSurface9*) gpD3DResources[pDestSurfaceHandle];
         auto hresult = pD3DDevice->GetRenderTargetData(IN pRenderTarget, IN pDestSurface);
@@ -1961,6 +1973,7 @@ void ProcessDeviceCommandQueue() {
         HWND hwnd = TRUNCATE_HANDLE(HWND, hDestWindowOverride);
 
         const auto hresult = pSwapChain->Present(pSourceRect, pDestRect, hwnd, pDirtyRegion, dwFlags);
+        async_readback::poll();
 
         if (!SUCCEEDED(hresult)) {
           std::stringstream ss;
@@ -3457,6 +3470,7 @@ void ProcessDeviceCommandQueue() {
       } else {
         dispatch(rpcHeader, (uint32_t) currentUID);
       }
+      async_readback::onCommand();
     }
 
     // Ensure the data position between client and server is in sync after processing the command

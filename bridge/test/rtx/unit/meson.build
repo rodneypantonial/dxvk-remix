@@ -67,7 +67,7 @@ endif
 
 # Remix API Bridge App Tests
 # Each x86 app runs against the client and server from a regular bridge build in _output.
-bridge_app_tests = [ 'remix_api_init_order', 'remix_api_device_registration', 'sent_state_device', 'query_event_device', 'shared_heap_upload_device' ]
+bridge_app_tests = [ 'remix_api_init_order', 'remix_api_device_registration', 'sent_state_device', 'query_event_device', 'shared_heap_upload_device', 'async_readback_device' ]
 # Runs against the Remix runtime, through test_remix_api_runtime_app.py.
 runtime_app_tests = [ 'remix_api_gpu_resident_scene_device' ]
 if (cpu_family == 'x86')
@@ -113,6 +113,18 @@ foreach resource : [ 'surface', 'vb', 'ib' ]
        is_parallel : false,
        timeout : 300)
 endforeach
+endif
+if (cpu_family == 'x86_64')
+test('async_readback_device_off',
+     python,
+     args : [join_paths(meson.current_source_dir(), 'test_remix_api_bridge_app.py'),
+             '--testExe', 'test_async_readback_device_x86.exe',
+             '--executablesDir', meson.current_build_dir(),
+             '--bridgeDir', join_paths(meson.global_source_root(), '_output'),
+             '--artifactDir', join_paths(meson.global_build_root(), 'test_artifacts', 'async_readback_device_off') ],
+     env : { 'REMIX_ASYNC_READBACK_TEST_CASE' : 'off' },
+     is_parallel : false,
+     timeout : 300)
 endif
 alias_target('unit_tests', tests)
 

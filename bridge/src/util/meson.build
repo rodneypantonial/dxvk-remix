@@ -74,6 +74,7 @@ util_header = files([
 	'util_monitor.h',
 	'util_perfcounters.h',
 	'util_queryresults.h',
+	'util_readbacks.h',
 	'log/log.h',
 	'log/log_strings.h',
 	'config/config.h',
